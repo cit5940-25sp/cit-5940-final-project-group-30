@@ -2,16 +2,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MovieFlyweight {
-    private static Map<String, String> actorPool = new HashMap<>();
-    private static Map<String, String> directorPool = new HashMap<>();
-    // Add other pools (composer, writer, cinematographer)
+    private static final Map<String, Person> personPool = new HashMap<>();
 
-    public static String getActor(String name) {
-        return actorPool.computeIfAbsent(name, k -> k);
+    public static Person getPerson(String name, String role) {
+        String key = name + "|" + role;
+        return personPool.computeIfAbsent(key, k -> new Person(name, role));
     }
 
-    public static String getDirector(String name) {
-        return directorPool.computeIfAbsent(name, k -> k);
+    public static class Person {
+        private final String name;
+        private final String role;
+
+        public Person(String name, String role) {
+            this.name = name;
+            this.role = role;
+        }
+
+        public String getName() { return name; }
+        public String getRole() { return role; }
     }
-    // Add other getters
 }
