@@ -10,20 +10,29 @@ public class GameView {
     public void displayBoard(GameState state) {
         textUI.clearScreen();
 
-        textUI.displayMessage("Player 1: " + state.getPlayer1().getName() +
-                " | Win Condition: " + state.getPlayer1().getWinCondition());
-        textUI.displayMessage("Player 2: " + state.getPlayer2().getName() +
-                " | Win Condition: " + state.getPlayer2().getWinCondition());
-        textUI.displayMessage("Current Player: " + state.getCurrentPlayer().getName());
+        textUI.displayMessage("Player 1: "
+                + state.getPlayer1().getName()
+                + " | Win Condition: "
+                + state.getPlayer1().getWinCondition()
+        );
+        textUI.displayMessage("Player 2: "
+                + state.getPlayer2().getName()
+                + " | Win Condition: "
+                + state.getPlayer2().getWinCondition()
+        );
+        textUI.displayMessage("Current Player: "
+                + state.getCurrentPlayer().getName()
+        );
         textUI.displayMessage("Round: " + state.getRoundCount());
 
         textUI.displayMessage("\nLast 5 Movies:");
         Deque<Movie> history = state.getMovieHistory();
         Movie previous = null;
         for (Movie movie : history) {
-            String connection = (previous != null) ?
-                    findConnection(previous, movie) : "Starting Movie";
-            textUI.displayMessage("- " + movie + " (" + connection + ")");
+            String conn = (previous != null)
+                    ? findConnection(previous, movie)
+                    : "Starting Movie";
+            textUI.displayMessage("- " + movie + " (" + conn + ")");
             previous = movie;
         }
 
@@ -31,36 +40,31 @@ public class GameView {
     }
 
     private String findConnection(Movie m1, Movie m2) {
-        for (String actor : m1.getActors()) {
+        for (MovieFlyweight.Person actor : m1.getActors()) {
             if (m2.getActors().contains(actor)) {
-                return "Actor: " + actor;
+                return "Actor: " + actor.getName();
             }
         }
-
-        for (String director : m1.getDirectors()) {
+        for (MovieFlyweight.Person director : m1.getDirectors()) {
             if (m2.getDirectors().contains(director)) {
-                return "Director: " + director;
+                return "Director: " + director.getName();
             }
         }
-
-        for (String writer : m1.getWriters()) {
+        for (MovieFlyweight.Person writer : m1.getWriters()) {
             if (m2.getWriters().contains(writer)) {
-                return "Writer: " + writer;
+                return "Writer: " + writer.getName();
             }
         }
-
-        for (String cinematographer : m1.getCinematographers()) {
+        for (MovieFlyweight.Person cinematographer : m1.getCinematographers()) {
             if (m2.getCinematographers().contains(cinematographer)) {
-                return "Cinematographer: " + cinematographer;
+                return "Cinematographer: " + cinematographer.getName();
             }
         }
-
-        for (String composer : m1.getComposers()) {
+        for (MovieFlyweight.Person composer : m1.getComposers()) {
             if (m2.getComposers().contains(composer)) {
-                return "Composer: " + composer;
+                return "Composer: " + composer.getName();
             }
         }
-
         return "Connected";
     }
 

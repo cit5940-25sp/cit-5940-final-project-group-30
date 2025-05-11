@@ -4,15 +4,22 @@ public class Movie {
     private final String title;
     private final int year;
     private final List<String> genres;
-    private final List<String> directors;
-    private final List<String> actors;
-    private final List<String> writers;
-    private final List<String> cinematographers;
-    private final List<String> composers;
 
-    public Movie(String title, int year, List<String> genres, List<String> directors,
-                 List<String> actors, List<String> writers,
-                 List<String> cinematographers, List<String> composers) {
+    private final List<MovieFlyweight.Person> directors;
+    private final List<MovieFlyweight.Person> actors;
+    private final List<MovieFlyweight.Person> writers;
+    private final List<MovieFlyweight.Person> cinematographers;
+    private final List<MovieFlyweight.Person> composers;
+
+
+    public Movie(String title,
+                 int year,
+                 List<String> genres,
+                 List<MovieFlyweight.Person> directors,
+                 List<MovieFlyweight.Person> actors,
+                 List<MovieFlyweight.Person> writers,
+                 List<MovieFlyweight.Person> cinematographers,
+                 List<MovieFlyweight.Person> composers) {
         this.title = title;
         this.year = year;
         this.genres = genres;
@@ -27,25 +34,32 @@ public class Movie {
     public String getTitle() {
         return title;
     }
+
     public int getYear() {
         return year;
     }
+
     public List<String> getGenres() {
         return genres;
     }
-    public List<String> getDirectors() {
+
+    public List<MovieFlyweight.Person> getDirectors() {
         return directors;
     }
-    public List<String> getActors() {
+
+    public List<MovieFlyweight.Person> getActors() {
         return actors;
     }
-    public List<String> getWriters() {
+
+    public List<MovieFlyweight.Person> getWriters() {
         return writers;
     }
-    public List<String> getCinematographers() {
+
+    public List<MovieFlyweight.Person> getCinematographers() {
         return cinematographers;
     }
-    public List<String> getComposers() {
+
+    public List<MovieFlyweight.Person> getComposers() {
         return composers;
     }
 

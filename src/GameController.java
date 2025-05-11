@@ -1,7 +1,6 @@
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map;
 
 public class GameController {
     private final GameState gameState;
@@ -11,11 +10,12 @@ public class GameController {
     private Timer turnTimer;
 
     public GameController(Player player1, Player player2, MovieGraph movieGraph) {
-        this.gameState = new GameState(player1, player2);
-        this.view = new GameView();
-        this.movieGraph = movieGraph;
+        this.gameState   = new GameState(player1, player2);
+        this.view        = new GameView();
+        this.movieGraph  = movieGraph;
         this.autocomplete = new Autocomplete();
 
+        // preload autocomplete with every movie
         for (Movie movie : movieGraph.getAllMovies()) {
             autocomplete.insert(movie);
         }
@@ -31,102 +31,113 @@ public class GameController {
         if (turnTimer != null) {
             turnTimer.cancel();
         }
-
         turnTimer = new Timer();
         turnTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 handleTimeout();
             }
-        }, 30000); // 30 seconds
+        }, 30_000); // 30 seconds per turn
     }
 
     private void handleTimeout() {
         Player loser = gameState.getCurrentPlayer();
-        Player winner = (loser == gameState.getPlayer1()) ?
-                gameState.getPlayer2() : gameState.getPlayer1();
+        Player winner = (loser == gameState.getPlayer1())
+                ? gameState.getPlayer2()
+                : gameState.getPlayer1();
 
         view.announceWinner(winner);
         System.exit(0);
     }
 
     public void processInput(String input) {
+        // 1) Lookup movie by title
         Movie movie = movieGraph.getMovieByTitle(input);
-
         if (movie == null) {
             view.showError("Movie not found!");
             return;
         }
 
+        // 2) Reject if already used by this player
         if (gameState.getCurrentPlayer().hasUsedMovie(movie)) {
             view.showError("Movie already used!");
             return;
         }
 
+        // 3) Determine connection key (or skip on first move)
         Movie lastMovie = gameState.getMovieHistory().peekFirst();
-        if (lastMovie != null && !movieGraph.areConnected(lastMovie, movie)) {
-            view.showError("Movies are not connected!");
-            return;
+        String connectionKey = "start";  // default for the very first turn
+        if (lastMovie != null) {
+            // a) check adjacency
+            if (!movieGraph.areConnected(lastMovie, movie)) {
+                view.showError("Movies are not connected!");
+                return;
+            }
+            // b) find which person links them
+            connectionKey = findConnectionKey(lastMovie, movie);
+            // c) enforce max-3 usage per connection
+            if (!gameState.isConnectionAvailable(connectionKey)) {
+                view.showError("Connection used too many times!");
+                return;
+            }
         }
 
-        String connectionKey = findConnectionKey(lastMovie, movie);
-        if (!gameState.isConnectionAvailable(connectionKey)) {
-            view.showError("Connection used too many times!");
-            return;
-        }
-
+        // 4) Commit the move
         gameState.useConnection(connectionKey);
         gameState.getCurrentPlayer().addUsedMovie(movie);
         gameState.addMovieToHistory(movie);
 
+        // 5) Win check
         if (gameState.getCurrentPlayer().hasWon(movie)) {
             view.announceWinner(gameState.getCurrentPlayer());
             System.exit(0);
         }
 
+        // 6) Switch turns
         gameState.switchPlayer();
         view.displayBoard(gameState);
         startTurnTimer();
     }
 
+    /**
+     * Inspect both movies' Person lists and return a key
+     * like "actor:tom hanks" to track usage.
+     */
     private String findConnectionKey(Movie m1, Movie m2) {
-        for (String actor : m1.getActors()) {
+        for (MovieFlyweight.Person actor : m1.getActors()) {
             if (m2.getActors().contains(actor)) {
-                return "actor:" + actor.toLowerCase();
+                return "actor:" + actor.getName().toLowerCase();
             }
         }
-
-        for (String director : m1.getDirectors()) {
+        for (MovieFlyweight.Person director : m1.getDirectors()) {
             if (m2.getDirectors().contains(director)) {
-                return "director:" + director.toLowerCase();
+                return "director:" + director.getName().toLowerCase();
             }
         }
-
-        for (String writer : m1.getWriters()) {
+        for (MovieFlyweight.Person writer : m1.getWriters()) {
             if (m2.getWriters().contains(writer)) {
-                return "writer:" + writer.toLowerCase();
+                return "writer:" + writer.getName().toLowerCase();
             }
         }
-
-        for (String cinematographer : m1.getCinematographers()) {
+        for (MovieFlyweight.Person cinematographer : m1.getCinematographers()) {
             if (m2.getCinematographers().contains(cinematographer)) {
-                return "cinematographer:" + cinematographer.toLowerCase();
+                return "cinematographer:" + cinematographer.getName().toLowerCase();
             }
         }
-
-        for (String composer : m1.getComposers()) {
+        for (MovieFlyweight.Person composer : m1.getComposers()) {
             if (m2.getComposers().contains(composer)) {
-                return "composer:" + composer.toLowerCase();
+                return "composer:" + composer.getName().toLowerCase();
             }
         }
-
         return "unknown";
     }
 
+    /** For the “:suggest” command in InputHandler */
     public List<Movie> getSuggestions(String prefix) {
         return autocomplete.suggestMovies(prefix);
     }
 
+    /** Expose the view so InputHandler can show errors or prompt again */
     public GameView getView() {
         return view;
     }
