@@ -42,15 +42,10 @@ public class DataLoader {
                     }
                 }
             }
-
-            // once all movies are loaded, connect them by shared people
-            movieGraph.buildConnections();
-          
         } catch (IOException e) {
             // if anything goes wrong, print the stack trace for debugging
             e.printStackTrace();
         }
-
         // return the fully built graph
         return movieGraph;
     }
