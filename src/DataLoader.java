@@ -30,7 +30,6 @@ public class DataLoader {
                 }
             }
 
-            movieGraph.buildConnections();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -40,45 +39,28 @@ public class DataLoader {
 
     private static Movie parseMovieFromCsv(String[] headers, String[] values) {
         try {
-            // Map headers to indices
             Map<String, Integer> headerMap = new HashMap<>();
             for (int i = 0; i < headers.length; i++) {
                 headerMap.put(headers[i].trim(), i);
             }
 
-            // Extract basic info
             String title = getValue("original_title", headerMap, values);
             int year = parseYear(getValue("release_date", headerMap, values));
 
-            // Extract lists from pipe-separated strings
-            List<String> genres = Arrays.asList(
-                    getValue("genres", headerMap, values).split("\\|"));
+            List<String> genres = Arrays.asList(getValue("genres", headerMap, values).split("\\|"));
+            List<String> directors = Arrays.asList(getValue("directors", 
+                    headerMap, values).split("\\|"));
+            List<String> actors = Arrays.asList(getValue("actors", 
+                    headerMap, values).split("\\|"));
+            List<String> writers = Arrays.asList(getValue("writers", 
+                    headerMap, values).split("\\|"));
+            List<String> cinematographers = Arrays.asList(getValue("cinematographers", 
+                    headerMap, values).split("\\|"));
+            List<String> composers = Arrays.asList(getValue("composers", 
+                    headerMap, values).split("\\|"));
 
-            List<String> directors = Arrays.asList(
-                    getValue("directors", headerMap, values).split("\\|"));
-
-            List<String> actors = Arrays.asList(
-                    getValue("actors", headerMap, values).split("\\|"));
-
-            List<String> writers = Arrays.asList(
-                    getValue("writers", headerMap, values).split("\\|"));
-
-            List<String> cinematographers = Arrays.asList(
-                    getValue("cinematographers", headerMap, values).split("\\|"));
-
-            List<String> composers = Arrays.asList(
-                    getValue("composers", headerMap, values).split("\\|"));
-
-            return new Movie(
-                    title,
-                    year,
-                    genres,
-                    directors,
-                    actors,
-                    writers,
-                    cinematographers,
-                    composers
-            );
+            return new Movie(title, year, genres, directors, 
+                    actors, writers, cinematographers, composers);
 
         } catch (Exception e) {
             System.err.println("Error parsing movie: " + e.getMessage());
