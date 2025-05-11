@@ -2,26 +2,39 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public class DataLoader {
+
+    /**
+     * Reads the CSV at filePath and builds a MovieGraph.
+     * Each line becomes one Movie (with shared Person flyweights),
+     * then we link them by any shared people.
+     */
     public static MovieGraph loadMovieData(String filePath) {
+        // create the graph that we’ll fill
         MovieGraph movieGraph = new MovieGraph();
 
+        // try-with-resources so the file always closes
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             String[] headers = null;
             boolean firstLine = true;
 
+            // read each line of the CSV
             while ((line = br.readLine()) != null) {
+                // the first line is the header row
                 if (firstLine) {
                     headers = line.split(",");
                     firstLine = false;
-                    continue;
+                    continue;  // skip to the next line
                 }
 
+                // split into columns, handling quoted commas
                 String[] values = parseCsvLine(line);
 
-                // Ensure we have enough columns
+                // only parse if we got the expected number of columns
                 if (values.length >= headers.length) {
                     Movie movie = parseMovieFromCsv(headers, values);
                     if (movie != null) {
@@ -30,74 +43,132 @@ public class DataLoader {
                 }
             }
 
+            // once all movies are loaded, connect them by shared people
+            movieGraph.buildConnections();
+          
         } catch (IOException e) {
+            // if anything goes wrong, print the stack trace for debugging
             e.printStackTrace();
         }
 
+        // return the fully built graph
         return movieGraph;
     }
 
+    /**
+     * Turns one CSV row (headers + values) into a Movie object.
+     * We use MovieFlyweight.getPerson(...) to share Person instances.
+     */
     private static Movie parseMovieFromCsv(String[] headers, String[] values) {
         try {
+            // map each column name to its index for easy lookup
             Map<String, Integer> headerMap = new HashMap<>();
             for (int i = 0; i < headers.length; i++) {
                 headerMap.put(headers[i].trim(), i);
             }
 
+            // basic fields
             String title = getValue("original_title", headerMap, values);
             int year = parseYear(getValue("release_date", headerMap, values));
 
-            List<String> genres = Arrays.asList(getValue("genres", headerMap, values).split("\\|"));
-            List<String> directors = Arrays.asList(getValue("directors", 
-                    headerMap, values).split("\\|"));
-            List<String> actors = Arrays.asList(getValue("actors", 
-                    headerMap, values).split("\\|"));
-            List<String> writers = Arrays.asList(getValue("writers", 
-                    headerMap, values).split("\\|"));
-            List<String> cinematographers = Arrays.asList(getValue("cinematographers", 
-                    headerMap, values).split("\\|"));
-            List<String> composers = Arrays.asList(getValue("composers", 
-                    headerMap, values).split("\\|"));
+            // genres can just stay as raw strings
+            List<String> genres = Arrays.asList(
+                    getValue("genres", headerMap, values).split("\\|")
+            );
 
-            return new Movie(title, year, genres, directors, 
-                    actors, writers, cinematographers, composers);
+            // for each role, split on '|' then get a shared Person
+            String rawDirs = getValue("directors", headerMap, values);
+            List<MovieFlyweight.Person> directors = Stream.of(rawDirs.split("\\|"))
+                    .map(name -> MovieFlyweight.getPerson(name.trim(), "director"))
+                    .collect(Collectors.toList());
 
+            String rawActors = getValue("actors", headerMap, values);
+            List<MovieFlyweight.Person> actors = Stream.of(rawActors.split("\\|"))
+                    .map(name -> MovieFlyweight.getPerson(name.trim(), "actor"))
+                    .collect(Collectors.toList());
+
+            String rawWriters = getValue("writers", headerMap, values);
+            List<MovieFlyweight.Person> writers = Stream.of(rawWriters.split("\\|"))
+                    .map(name -> MovieFlyweight.getPerson(name.trim(), "writer"))
+                    .collect(Collectors.toList());
+
+            String rawCinematogs = getValue("cinematographers", headerMap, values);
+            List<MovieFlyweight.Person> cinematographers = Stream.of(rawCinematogs.split("\\|"))
+                    .map(name -> MovieFlyweight.getPerson(name.trim(), "cinematographer"))
+                    .collect(Collectors.toList());
+
+            String rawComposers = getValue("composers", headerMap, values);
+            List<MovieFlyweight.Person> composers = Stream.of(rawComposers.split("\\|"))
+                    .map(name -> MovieFlyweight.getPerson(name.trim(), "composer"))
+                    .collect(Collectors.toList());
+
+            // finally, build and return the Movie
+            return new Movie(
+                    title,
+                    year,
+                    genres,
+                    directors,
+                    actors,
+                    writers,
+                    cinematographers,
+                    composers
+            );
         } catch (Exception e) {
+            // if something unexpected happens, log it and skip this movie
             System.err.println("Error parsing movie: " + e.getMessage());
             return null;
         }
     }
 
-    private static String getValue(String header, Map<String, Integer> headerMap, String[] values) {
+    /**
+     * Safely fetches a column value by header name.
+     * Returns empty string if the column is missing.
+     */
+    private static String getValue(String header,
+                                   Map<String, Integer> headerMap,
+                                   String[] values) {
         Integer index = headerMap.get(header);
-        return (index != null && index < values.length) ? values[index] : "";
+        return (index != null && index < values.length)
+                ? values[index]
+                : "";
     }
 
+    /**
+     * Parses a date string like "2020-05-01" into its year (2020).
+     * If the date is malformed, returns 0.
+     */
     private static int parseYear(String date) {
         try {
-            return date.length() >= 4 ? Integer.parseInt(date.substring(0, 4)) : 0;
+            return (date != null && date.length() >= 4)
+                    ? Integer.parseInt(date.substring(0, 4))
+                    : 0;
         } catch (NumberFormatException e) {
             return 0;
         }
     }
 
+    /**
+     * Splits a CSV line into fields, respecting quoted commas.
+     * E.g. "One, Two",Three → ["One, Two", "Three"]
+     */
     private static String[] parseCsvLine(String line) {
-        List<String> values = new ArrayList<>();
+        List<String> parts = new ArrayList<>();
         boolean inQuotes = false;
         StringBuilder sb = new StringBuilder();
 
         for (char c : line.toCharArray()) {
             if (c == '"') {
-                inQuotes = !inQuotes;
+                inQuotes = !inQuotes;  // toggle quote mode
             } else if (c == ',' && !inQuotes) {
-                values.add(sb.toString());
+                // comma outside quotes: finish this field
+                parts.add(sb.toString());
                 sb = new StringBuilder();
             } else {
                 sb.append(c);
             }
         }
-
-        values.add(sb.toString());
-        return values.toArray(new String[0]);
+        // add the last field
+        parts.add(sb.toString());
+        return parts.toArray(new String[0]);
     }
 }
