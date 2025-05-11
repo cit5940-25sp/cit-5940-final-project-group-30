@@ -1,3 +1,4 @@
+
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -141,4 +142,9 @@ public class GameController {
     public GameView getView() {
         return view;
     }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
 }

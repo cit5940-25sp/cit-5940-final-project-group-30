@@ -76,8 +76,6 @@ public class GameView {
         textUI.clearScreen();
         textUI.displayMessage("Game Over!");
         textUI.displayMessage("Winner: " + winner.getName());
-        textUI.displayMessage("Press Enter to exit...");
-        textUI.getInput();
     }
 
     public String getInput() {
