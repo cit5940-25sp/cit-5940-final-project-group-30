@@ -16,6 +16,7 @@ public class MovieGraph {
         // ensure there's an entry in the edges map
         movieEdges.putIfAbsent(movie, new HashSet<>());
         allMovies.add(movie);
+        
     }
 
     /**
@@ -33,7 +34,7 @@ public class MovieGraph {
             addPersonConnections(personToMovies, m.getCinematographers(), m);
             addPersonConnections(personToMovies, m.getComposers(), m);
         }
-
+    
         // for each person, fully connect their movies
         for (Set<Movie> group : personToMovies.values()) {
             if (group.size() < 2) continue;  // no connections if only one movie
@@ -62,8 +63,8 @@ public class MovieGraph {
             personToMovies
                     .computeIfAbsent(p, k -> new HashSet<>())
                     .add(movie);
-        }
     }
+
 
     /**
      * Check if two movies share an edge.

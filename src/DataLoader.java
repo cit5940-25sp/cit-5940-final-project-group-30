@@ -45,7 +45,7 @@ public class DataLoader {
 
             // once all movies are loaded, connect them by shared people
             movieGraph.buildConnections();
-
+          
         } catch (IOException e) {
             // if anything goes wrong, print the stack trace for debugging
             e.printStackTrace();
@@ -113,7 +113,6 @@ public class DataLoader {
                     cinematographers,
                     composers
             );
-
         } catch (Exception e) {
             // if something unexpected happens, log it and skip this movie
             System.err.println("Error parsing movie: " + e.getMessage());
