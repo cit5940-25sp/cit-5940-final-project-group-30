@@ -32,7 +32,7 @@ public class GamePlayGUI extends JFrame implements GameView {
 
         gameInfoArea = new JTextArea();
         gameInfoArea.setEditable(false);
-        gameInfoArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        gameInfoArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
         gameInfoArea.setBackground(backgroundColor);
         this.add(new JScrollPane(gameInfoArea), BorderLayout.CENTER);
 
