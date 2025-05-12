@@ -15,7 +15,7 @@ Our Implementation:
 - Model:
   Movie, MovieFlyweight, Player, GameState, MovieGraph
 - View:
-  GameView, TextUI
+  ConsoleView, TextUI
 - Controller:  
   GameController, inputHandler
 

@@ -6,34 +6,46 @@ import java.awt.event.ActionEvent;
 import java.util.Deque;
 import java.util.List;
 
-public class GamePlayGUI extends JFrame {
-    private final GameController controller;
+public class GamePlayGUI extends JFrame implements GameView {
+    private GameController controller;
     private final JTextArea gameInfoArea;
     private final JTextField inputField;
     private final JButton submitButton;
     private final JButton exitButton;
     private final JList<String> suggestionList;
     private final DefaultListModel<String> suggestionModel;
+    private final JLabel errorLabel = new JLabel();
+    private final JLabel winnerLabel = new JLabel();
 
-    public GamePlayGUI(GameController controller) {
-        this.controller = controller;
+    public GamePlayGUI() {
         this.setTitle("Movie Name Game");
         this.setSize(700, 500);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(new BorderLayout());
 
+        // Colors
+        Color headerColor = Color.decode("#7373fe");
+        Color backgroundColor = Color.decode("#d6d6f6");
+
+        this.getContentPane().setBackground(backgroundColor);
+
         gameInfoArea = new JTextArea();
         gameInfoArea.setEditable(false);
         gameInfoArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        gameInfoArea.setBackground(backgroundColor);
         this.add(new JScrollPane(gameInfoArea), BorderLayout.CENTER);
 
         JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.setBackground(backgroundColor);
         inputField = new JTextField();
+        inputField.setBackground(Color.WHITE);
+        inputField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         inputPanel.add(inputField, BorderLayout.CENTER);
 
         submitButton = new JButton("Submit");
         exitButton = new JButton("Exit");
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(backgroundColor);
         buttonPanel.add(submitButton);
         buttonPanel.add(exitButton);
         inputPanel.add(buttonPanel, BorderLayout.EAST);
@@ -41,51 +53,99 @@ public class GamePlayGUI extends JFrame {
 
         suggestionModel = new DefaultListModel<>();
         suggestionList = new JList<>(suggestionModel);
+        suggestionList.setBackground(backgroundColor);
+        suggestionList.setSelectionBackground(headerColor);
         this.add(new JScrollPane(suggestionList), BorderLayout.EAST);
 
-        updateGameInfo();
+        errorLabel.setForeground(Color.RED);
+        errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        errorLabel.setOpaque(true);
+        errorLabel.setBackground(backgroundColor);
+        errorLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
-        // Autocomplete when typing
+        winnerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        winnerLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        winnerLabel.setForeground(new Color(0, 128, 0));
+        winnerLabel.setOpaque(true);
+        winnerLabel.setBackground(backgroundColor);
+        winnerLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        winnerLabel.setVisible(false);
+
+        JPanel messagePanel = new JPanel();
+        messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.Y_AXIS));
+        messagePanel.setBackground(backgroundColor);
+        messagePanel.add(errorLabel);
+        messagePanel.add(winnerLabel);
+        this.add(messagePanel, BorderLayout.NORTH);
+
         inputField.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { updateSuggestions(); }
             public void removeUpdate(DocumentEvent e) { updateSuggestions(); }
             public void changedUpdate(DocumentEvent e) { updateSuggestions(); }
         });
 
-        // Select from suggestion list
         suggestionList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 String selected = suggestionList.getSelectedValue();
                 if (selected != null) {
                     inputField.setText(selected);
-                    submitButton.doClick();  // Optional: auto-submit when clicked
+                    submitButton.doClick();
                 }
             }
         });
 
-        // Submit button (use background thread)
         submitButton.addActionListener((ActionEvent e) -> {
             String input = inputField.getText().trim();
             if (!input.isEmpty()) {
-                new SwingWorker<Void, Void>() {
+                new SwingWorker<Boolean, Void>() {
                     @Override
-                    protected Void doInBackground() {
-                        controller.processInput(input);
-                        return null;
+                    protected Boolean doInBackground() {
+                        return controller.processInput(input);
                     }
 
                     @Override
                     protected void done() {
-                        updateGameInfo();
-                        inputField.setText("");
-                        suggestionModel.clear();
+                        try {
+                            boolean success = get();
+                            if (success) {
+                                errorLabel.setText("");
+                                errorLabel.setVisible(false);
+                                inputField.setText("");
+                                suggestionModel.clear();
+                                updateGameInfo();
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
                     }
                 }.execute();
             }
         });
 
-        // Exit game
         exitButton.addActionListener(e -> System.exit(0));
+    }
+
+    public void setController(GameController controller) {
+        this.controller = controller;
+        updateGameInfo();
+    }
+
+    @Override
+    public void displayBoard(GameState state) {
+        updateGameInfo();
+    }
+
+    @Override
+    public void showError(String error) {
+        errorLabel.setText(error);
+        errorLabel.setVisible(true);
+    }
+
+    @Override
+    public void announceWinner(Player winner) {
+        winnerLabel.setText("Game Over! Winner: " + winner.getName() + " — Press Exit to close.");
+        winnerLabel.setVisible(true);
+        errorLabel.setVisible(false);
     }
 
     private void updateGameInfo() {
@@ -103,7 +163,6 @@ public class GamePlayGUI extends JFrame {
         Deque<Movie> history = state.getMovieHistory();
         Movie[] historyArray = history.toArray(new Movie[0]);
 
-        // Display in reverse order (newest first)
         for (int i = historyArray.length - 1; i >= 0; i--) {
             Movie movie = historyArray[i];
             String connection = (i < historyArray.length - 1)
@@ -132,32 +191,20 @@ public class GamePlayGUI extends JFrame {
 
     private String findConnection(Movie m1, Movie m2) {
         if (m1 == null || m2 == null) return "Starting Movie";
-
-        // Check all roles
         for (MovieFlyweight.Person person : m1.getActors()) {
-            if (m2.getActors().contains(person)) {
-                return "Actor: " + person.getName();
-            }
+            if (m2.getActors().contains(person)) return "Actor: " + person.getName();
         }
         for (MovieFlyweight.Person person : m1.getDirectors()) {
-            if (m2.getDirectors().contains(person)) {
-                return "Director: " + person.getName();
-            }
+            if (m2.getDirectors().contains(person)) return "Director: " + person.getName();
         }
         for (MovieFlyweight.Person person : m1.getWriters()) {
-            if (m2.getWriters().contains(person)) {
-                return "Writer: " + person.getName();
-            }
+            if (m2.getWriters().contains(person)) return "Writer: " + person.getName();
         }
         for (MovieFlyweight.Person person : m1.getCinematographers()) {
-            if (m2.getCinematographers().contains(person)) {
-                return "Cinematographer: " + person.getName();
-            }
+            if (m2.getCinematographers().contains(person)) return "Cinematographer: " + person.getName();
         }
         for (MovieFlyweight.Person person : m1.getComposers()) {
-            if (m2.getComposers().contains(person)) {
-                return "Composer: " + person.getName();
-            }
+            if (m2.getComposers().contains(person)) return "Composer: " + person.getName();
         }
         return "No direct connection found";
     }

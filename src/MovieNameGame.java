@@ -4,49 +4,40 @@ import java.util.*;
 public class MovieNameGame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new GameInitializer().execute();
-        });
-    }
-}
+            // Load data
+            MovieGraph movieGraph = DataLoader.loadMovieData("data/tmdb_movies.csv");
 
-class GameInitializer extends SwingWorker<Void, Void> {
-    @Override
-    protected Void doInBackground() {
-        // Load data
-        MovieGraph movieGraph = DataLoader.loadMovieData("data/tmdb_movies.csv");
+            // Random win conditions
+            List<String> allGenres = Arrays.asList(
+                    "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama",
+                    "Family", "Fantasy", "Foreign", "History", "Horror", "Music", "Mystery",
+                    "Romance", "Science Fiction", "TV Movie", "Thriller", "War", "Western"
+            );
+            Collections.shuffle(allGenres);
+            Map<String, Integer> p1 = new HashMap<>();
+            Map<String, Integer> p2 = new HashMap<>();
+            p1.put(allGenres.get(0), 5);
+            p2.put(allGenres.get(1), 5);
 
-        // Randomly select two distinct genres from a list
-        List<String> allGenres = Arrays.asList(
-                "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama",
-                "Family", "Fantasy", "Foreign", "History", "Horror", "Music", "Mystery",
-                "Romance", "Science Fiction", "TV Movie", "Thriller", "War", "Western"
-        );
-        Collections.shuffle(allGenres);
-        String genre1 = allGenres.get(0);
-        String genre2 = allGenres.get(1);
+            // Players
+            Player player1 = new Player("Player 1", p1);
+            Player player2 = new Player("Player 2", p2);
 
-        // Create win conditions
-        Map<String, Integer> player1WinCondition = new HashMap<>();
-        player1WinCondition.put(genre1, 5);
-        Map<String, Integer> player2WinCondition = new HashMap<>();
-        player2WinCondition.put(genre2, 5);
+            // Step 1: Create GUI without controller
+            GamePlayGUI gui = new GamePlayGUI();
 
-        // Create players and controller
-        Player player1 = new Player("Player 1", player1WinCondition);
-        Player player2 = new Player("Player 2", player2WinCondition);
-        GameController controller = new GameController(player1, player2, movieGraph);
+            // Step 2: Create controller, injecting the GUI as the view
+            GameController controller = new GameController(player1, player2, movieGraph, gui);
 
-        // Pick starting movie
-        Movie startingMovie = movieGraph.getRandomMovie();
-        controller.startGame(startingMovie);
+            // Step 3: Hook controller back into GUI
+            gui.setController(controller);
 
-        // Launch GUI
-        SwingUtilities.invokeLater(() -> {
-            GamePlayGUI gui = new GamePlayGUI(controller);
+            // Start game
+            Movie startingMovie = movieGraph.getRandomMovie();
+            controller.startGame(startingMovie);
+
+            // Show GUI
             gui.setVisible(true);
         });
-
-        return null;
     }
 }
-

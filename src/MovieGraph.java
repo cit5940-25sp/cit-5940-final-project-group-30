@@ -4,11 +4,13 @@ public class MovieGraph {
     private final Map<Movie, Set<Movie>> movieEdges = new HashMap<>();
     private final Map<String, Movie> movieMap    = new HashMap<>();
     private final List<Movie> allMovies          = new ArrayList<>();
+    private final Map<String, Movie> moviesByLowercaseTitle = new HashMap<>();
 
     /** Add a node to the graph (edges come later). */
     public void addMovie(Movie movie) {
         String key = movie.getTitle().toLowerCase();
         movieMap.put(key, movie);
+        moviesByLowercaseTitle.put(movie.getTitle().toLowerCase(), movie);
         movieEdges.putIfAbsent(movie, new HashSet<>());
         allMovies.add(movie);
     }
@@ -63,7 +65,7 @@ public class MovieGraph {
 
     /** Lookup by title (case-insensitive). */
     public Movie getMovieByTitle(String title) {
-        return movieMap.get(title.toLowerCase());
+        return moviesByLowercaseTitle.get(title.toLowerCase());
     }
 
     /** Pick a random movie as a starter. */

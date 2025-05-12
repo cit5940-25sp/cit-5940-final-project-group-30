@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.Objects;
 
 public class Movie {
     private final String title;
@@ -67,4 +68,22 @@ public class Movie {
     public String toString() {
         return title + " (" + year + ")";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Movie other = (Movie) obj;
+        return title.equalsIgnoreCase(other.title) && year == other.year;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(title.toLowerCase(), year);
+    }
+
 }

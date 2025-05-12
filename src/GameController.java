@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -9,9 +10,9 @@ public class GameController {
     private final Autocomplete autocomplete;
     private Timer turnTimer;
 
-    public GameController(Player player1, Player player2, MovieGraph movieGraph) {
+    public GameController(Player player1, Player player2, MovieGraph movieGraph, GameView view) {
         this.gameState   = new GameState(player1, player2);
-        this.view        = new GameView();
+        this.view        = view;
         this.movieGraph  = movieGraph;
         this.autocomplete = new Autocomplete();
 
@@ -47,21 +48,20 @@ public class GameController {
                 : gameState.getPlayer1();
 
         view.announceWinner(winner);
-        System.exit(0);
     }
 
-    public void processInput(String input) {
+    public boolean processInput(String input) {
         // 1) Lookup movie by title
         Movie movie = movieGraph.getMovieByTitle(input);
         if (movie == null) {
-            view.showError("Movie not found!");
-            return;
+            SwingUtilities.invokeLater(() -> view.showError("Movie not found!"));
+            return false;
         }
 
         // 2) Reject if already used by this player
         if (gameState.getCurrentPlayer().hasUsedMovie(movie)) {
-            view.showError("Movie already used!");
-            return;
+            SwingUtilities.invokeLater(() -> view.showError("Movie already used!"));
+            return false;
         }
 
         // 3) Determine connection key (or skip on first move)
@@ -70,15 +70,15 @@ public class GameController {
         if (lastMovie != null) {
             // a) check adjacency
             if (!movieGraph.areConnected(lastMovie, movie)) {
-                view.showError("Movies are not connected!");
-                return;
+                SwingUtilities.invokeLater(() -> view.showError("Movies are not connected!"));
+                return false;
             }
             // b) find which person links them
             connectionKey = findConnectionKey(lastMovie, movie);
             // c) enforce max-3 usage per connection
             if (!gameState.isConnectionAvailable(connectionKey)) {
-                view.showError("Connection used too many times!");
-                return;
+                SwingUtilities.invokeLater(() -> view.showError("Connection used too many times!"));
+                return false;
             }
         }
 
@@ -89,14 +89,15 @@ public class GameController {
 
         // 5) Win check
         if (gameState.getCurrentPlayer().hasWon(movie)) {
-            view.announceWinner(gameState.getCurrentPlayer());
-            System.exit(0);
+            SwingUtilities.invokeLater(() -> view.announceWinner(gameState.getCurrentPlayer()));
+            return true;
         }
 
         // 6) Switch turns
         gameState.switchPlayer();
         view.displayBoard(gameState);
         startTurnTimer();
+        return true;
     }
 
     /**
@@ -145,5 +146,4 @@ public class GameController {
     public GameState getGameState() {
         return gameState;
     }
-
 }
