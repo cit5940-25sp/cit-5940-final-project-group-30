@@ -27,45 +27,51 @@ public class GameView {
 
         textUI.displayMessage("\nLast 5 Movies:");
         Deque<Movie> history = state.getMovieHistory();
-        Movie previous = null;
-        for (Movie movie : history) {
-            String conn = (previous != null)
-                    ? findConnection(previous, movie)
+        Movie[] historyArray = history.toArray(new Movie[0]);
+
+        // Display in reverse order (newest first)
+        for (int i = historyArray.length - 1; i >= 0; i--) {
+            Movie movie = historyArray[i];
+            String connection = (i < historyArray.length - 1)
+                    ? findConnection(movie, historyArray[i + 1])
                     : "Starting Movie";
-            textUI.displayMessage("- " + movie + " (" + conn + ")");
-            previous = movie;
+            textUI.displayMessage("- " + movie + " (" + connection + ")");
+            textUI.displayMessage("  Genres: " + String.join(", ", movie.getGenres()));
         }
 
         textUI.displayMessage("\nEnter a movie title:");
     }
 
     private String findConnection(Movie m1, Movie m2) {
-        for (MovieFlyweight.Person actor : m1.getActors()) {
-            if (m2.getActors().contains(actor)) {
-                return "Actor: " + actor.getName();
+        if (m1 == null || m2 == null) return "Starting Movie";
+
+        // Check all roles
+        for (MovieFlyweight.Person person : m1.getActors()) {
+            if (m2.getActors().contains(person)) {
+                return "Actor: " + person.getName();
             }
         }
-        for (MovieFlyweight.Person director : m1.getDirectors()) {
-            if (m2.getDirectors().contains(director)) {
-                return "Director: " + director.getName();
+        for (MovieFlyweight.Person person : m1.getDirectors()) {
+            if (m2.getDirectors().contains(person)) {
+                return "Director: " + person.getName();
             }
         }
-        for (MovieFlyweight.Person writer : m1.getWriters()) {
-            if (m2.getWriters().contains(writer)) {
-                return "Writer: " + writer.getName();
+        for (MovieFlyweight.Person person : m1.getWriters()) {
+            if (m2.getWriters().contains(person)) {
+                return "Writer: " + person.getName();
             }
         }
-        for (MovieFlyweight.Person cinematographer : m1.getCinematographers()) {
-            if (m2.getCinematographers().contains(cinematographer)) {
-                return "Cinematographer: " + cinematographer.getName();
+        for (MovieFlyweight.Person person : m1.getCinematographers()) {
+            if (m2.getCinematographers().contains(person)) {
+                return "Cinematographer: " + person.getName();
             }
         }
-        for (MovieFlyweight.Person composer : m1.getComposers()) {
-            if (m2.getComposers().contains(composer)) {
-                return "Composer: " + composer.getName();
+        for (MovieFlyweight.Person person : m1.getComposers()) {
+            if (m2.getComposers().contains(person)) {
+                return "Composer: " + person.getName();
             }
         }
-        return "Connected";
+        return "No direct connection found";
     }
 
     public void showError(String error) {

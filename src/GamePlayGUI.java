@@ -101,11 +101,16 @@ public class GamePlayGUI extends JFrame {
 
         sb.append("Last 5 Movies:\n");
         Deque<Movie> history = state.getMovieHistory();
-        Movie previous = null;
-        for (Movie movie : history) {
-            String connection = (previous != null) ? findConnection(previous, movie) : "Starting Movie";
+        Movie[] historyArray = history.toArray(new Movie[0]);
+
+        // Display in reverse order (newest first)
+        for (int i = historyArray.length - 1; i >= 0; i--) {
+            Movie movie = historyArray[i];
+            String connection = (i < historyArray.length - 1)
+                    ? findConnection(movie, historyArray[i + 1])
+                    : "Starting Movie";
             sb.append("- ").append(movie).append(" (").append(connection).append(")\n");
-            previous = movie;
+            sb.append("  Genres: ").append(String.join(", ", movie.getGenres())).append("\n");
         }
 
         gameInfoArea.setText(sb.toString());
@@ -126,21 +131,34 @@ public class GamePlayGUI extends JFrame {
     }
 
     private String findConnection(Movie m1, Movie m2) {
-        for (MovieFlyweight.Person actor : m1.getActors()) {
-            if (m2.getActors().contains(actor)) return "Actor: " + actor.getName();
+        if (m1 == null || m2 == null) return "Starting Movie";
+
+        // Check all roles
+        for (MovieFlyweight.Person person : m1.getActors()) {
+            if (m2.getActors().contains(person)) {
+                return "Actor: " + person.getName();
+            }
         }
-        for (MovieFlyweight.Person director : m1.getDirectors()) {
-            if (m2.getDirectors().contains(director)) return "Director: " + director.getName();
+        for (MovieFlyweight.Person person : m1.getDirectors()) {
+            if (m2.getDirectors().contains(person)) {
+                return "Director: " + person.getName();
+            }
         }
-        for (MovieFlyweight.Person writer : m1.getWriters()) {
-            if (m2.getWriters().contains(writer)) return "Writer: " + writer.getName();
+        for (MovieFlyweight.Person person : m1.getWriters()) {
+            if (m2.getWriters().contains(person)) {
+                return "Writer: " + person.getName();
+            }
         }
-        for (MovieFlyweight.Person cinematographer : m1.getCinematographers()) {
-            if (m2.getCinematographers().contains(cinematographer)) return "Cinematographer: " + cinematographer.getName();
+        for (MovieFlyweight.Person person : m1.getCinematographers()) {
+            if (m2.getCinematographers().contains(person)) {
+                return "Cinematographer: " + person.getName();
+            }
         }
-        for (MovieFlyweight.Person composer : m1.getComposers()) {
-            if (m2.getComposers().contains(composer)) return "Composer: " + composer.getName();
+        for (MovieFlyweight.Person person : m1.getComposers()) {
+            if (m2.getComposers().contains(person)) {
+                return "Composer: " + person.getName();
+            }
         }
-        return "Connected";
+        return "No direct connection found";
     }
 }
