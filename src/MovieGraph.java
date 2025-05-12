@@ -28,20 +28,14 @@ public class MovieGraph {
             for (MovieFlyweight.Person p : m.getDirectors()) {
                 personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
             }
-            for (MovieFlyweight.Person p : m.getWriters()) {
-                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
-            }
-            for (MovieFlyweight.Person p : m.getCinematographers()) {
-                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
-            }
-            for (MovieFlyweight.Person p : m.getComposers()) {
-                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
-            }
+
         }
 
         // for each person, fully connect their movies
         for (Set<Movie> group : personToMovies.values()) {
-            if (group.size() < 2) continue;
+            if (group.size() < 2) {
+                continue;
+            }
             for (Movie m1 : group) {
                 for (Movie m2 : group) {
                     if (!m1.equals(m2)) {
@@ -70,7 +64,9 @@ public class MovieGraph {
 
     /** Pick a random movie as a starter. */
     public Movie getRandomMovie() {
-        if (allMovies.isEmpty()) return null;
+        if (allMovies.isEmpty()) {
+            return null;
+        }
         return allMovies.get(new Random().nextInt(allMovies.size()));
     }
 

@@ -66,55 +66,37 @@ public class DataLoader {
             // basic fields
             String title = getValue("original_title", headerMap, values);
             int year = parseYear(getValue("release_date", headerMap, values));
+            List<String> genres = Arrays.asList(getValue("genres", headerMap, values).split("\\|"));
 
-            // genres can just stay as raw strings
-            List<String> genres = Arrays.asList(
-                    getValue("genres", headerMap, values).split("\\|")
-            );
-
-            // for each role, split on '|' then get a shared Person
-            String rawDirs = getValue("directors", headerMap, values);
-            List<MovieFlyweight.Person> directors = Stream.of(rawDirs.split("\\|"))
-                    .map(name -> MovieFlyweight.getPerson(name.trim(), "director"))
+            // safely parse each role
+            List<MovieFlyweight.Person> directors = Stream.of(getValue("director",
+                            headerMap, values).split("\\|"))
+                    .map(String::trim).filter(name -> !name.isEmpty())
+                    .map(name -> MovieFlyweight.getPerson(name, "director"))
                     .collect(Collectors.toList());
 
-            String rawActors = getValue("actors", headerMap, values);
-            List<MovieFlyweight.Person> actors = Stream.of(rawActors.split("\\|"))
-                    .map(name -> MovieFlyweight.getPerson(name.trim(), "actor"))
+            List<MovieFlyweight.Person> actors = Stream.of(getValue("cast",
+                            headerMap, values).split("\\|"))
+                    .map(String::trim).filter(name -> !name.isEmpty())
+                    .map(name -> MovieFlyweight.getPerson(name, "actor"))
                     .collect(Collectors.toList());
 
-            String rawWriters = getValue("writers", headerMap, values);
-            List<MovieFlyweight.Person> writers = Stream.of(rawWriters.split("\\|"))
-                    .map(name -> MovieFlyweight.getPerson(name.trim(), "writer"))
-                    .collect(Collectors.toList());
 
-            String rawCinematogs = getValue("cinematographers", headerMap, values);
-            List<MovieFlyweight.Person> cinematographers = Stream.of(rawCinematogs.split("\\|"))
-                    .map(name -> MovieFlyweight.getPerson(name.trim(), "cinematographer"))
-                    .collect(Collectors.toList());
 
-            String rawComposers = getValue("composers", headerMap, values);
-            List<MovieFlyweight.Person> composers = Stream.of(rawComposers.split("\\|"))
-                    .map(name -> MovieFlyweight.getPerson(name.trim(), "composer"))
-                    .collect(Collectors.toList());
-
-            // finally, build and return the Movie
             return new Movie(
                     title,
                     year,
                     genres,
                     directors,
-                    actors,
-                    writers,
-                    cinematographers,
-                    composers
+                    actors
             );
+
         } catch (Exception e) {
-            // if something unexpected happens, log it and skip this movie
             System.err.println("Error parsing movie: " + e.getMessage());
             return null;
         }
     }
+
 
     /**
      * Safely fetches a column value by header name.
@@ -135,7 +117,9 @@ public class DataLoader {
      */
     private static int parseYear(String date) {
         try {
-            if (date == null || date.isEmpty()) return 0;
+            if (date == null || date.isEmpty()) {
+                return 0;
+            }
 
             // Handle different date formats:
             // 1. "6/9/2015" (month/day/year)

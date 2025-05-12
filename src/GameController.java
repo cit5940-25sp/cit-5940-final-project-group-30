@@ -23,6 +23,7 @@ public class GameController {
     }
 
     public void startGame(Movie startingMovie) {
+        gameState.getCurrentPlayer().addUsedMovie(startingMovie);
         gameState.addMovieToHistory(startingMovie);
         view.displayBoard(gameState);
         startTurnTimer();
@@ -88,7 +89,7 @@ public class GameController {
         gameState.addMovieToHistory(movie);
 
         // 5) Win check
-        if (gameState.getCurrentPlayer().hasWon(movie)) {
+        if (gameState.getCurrentPlayer().hasWon()) {
             SwingUtilities.invokeLater(() -> view.announceWinner(gameState.getCurrentPlayer()));
             return true;
         }
@@ -113,21 +114,6 @@ public class GameController {
         for (MovieFlyweight.Person director : m1.getDirectors()) {
             if (m2.getDirectors().contains(director)) {
                 return "director:" + director.getName().toLowerCase();
-            }
-        }
-        for (MovieFlyweight.Person writer : m1.getWriters()) {
-            if (m2.getWriters().contains(writer)) {
-                return "writer:" + writer.getName().toLowerCase();
-            }
-        }
-        for (MovieFlyweight.Person cinematographer : m1.getCinematographers()) {
-            if (m2.getCinematographers().contains(cinematographer)) {
-                return "cinematographer:" + cinematographer.getName().toLowerCase();
-            }
-        }
-        for (MovieFlyweight.Person composer : m1.getComposers()) {
-            if (m2.getComposers().contains(composer)) {
-                return "composer:" + composer.getName().toLowerCase();
             }
         }
         return "unknown";

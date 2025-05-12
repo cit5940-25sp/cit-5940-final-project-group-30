@@ -7,6 +7,8 @@ public class MovieNameGame {
             // Load data
             MovieGraph movieGraph = DataLoader.loadMovieData("data/tmdb_movies.csv");
 
+            movieGraph.buildConnections();
+
             // Random win conditions
             List<String> allGenres = Arrays.asList(
                     "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama",

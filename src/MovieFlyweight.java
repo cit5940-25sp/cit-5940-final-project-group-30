@@ -3,12 +3,15 @@ import java.util.Map;
 import java.util.Objects;
 
 public class MovieFlyweight {
-    private static final Map<String, Person> personPool = new HashMap<>();
+    private static final Map<String, Person> PERSON_POOL = new HashMap<>();
 
     public static Person getPerson(String name, String role) {
-        String key = name + "|" + role;
-        return personPool.computeIfAbsent(key, k -> new Person(name, role));
+        String trimmedName = name.trim();
+        String trimmedRole = role.trim();
+        String key = trimmedName.toLowerCase() + "|" + trimmedRole.toLowerCase();
+        return PERSON_POOL.computeIfAbsent(key, k -> new Person(trimmedName, trimmedRole));
     }
+
 
     public static class Person {
         private final String name;

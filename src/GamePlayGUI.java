@@ -79,9 +79,15 @@ public class GamePlayGUI extends JFrame implements GameView {
         this.add(messagePanel, BorderLayout.NORTH);
 
         inputField.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { updateSuggestions(); }
-            public void removeUpdate(DocumentEvent e) { updateSuggestions(); }
-            public void changedUpdate(DocumentEvent e) { updateSuggestions(); }
+            public void insertUpdate(DocumentEvent e) {
+                updateSuggestions();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                updateSuggestions();
+            }
+            public void changedUpdate(DocumentEvent e) {
+                updateSuggestions();
+            }
         });
 
         suggestionList.addListSelectionListener(e -> {
@@ -153,9 +159,11 @@ public class GamePlayGUI extends JFrame implements GameView {
         StringBuilder sb = new StringBuilder();
 
         sb.append("Player 1: ").append(state.getPlayer1().getName())
-                .append(" | Win Condition: ").append(state.getPlayer1().getWinCondition()).append("\n");
+                .append(" | Win Condition: ").append(state.getPlayer1().
+                        getWinCondition()).append("\n");
         sb.append("Player 2: ").append(state.getPlayer2().getName())
-                .append(" | Win Condition: ").append(state.getPlayer2().getWinCondition()).append("\n");
+                .append(" | Win Condition: ").append(state.getPlayer2().
+                        getWinCondition()).append("\n");
         sb.append("Current Player: ").append(state.getCurrentPlayer().getName()).append("\n");
         sb.append("Round: ").append(state.getRoundCount()).append("\n\n");
 
@@ -190,22 +198,20 @@ public class GamePlayGUI extends JFrame implements GameView {
     }
 
     private String findConnection(Movie m1, Movie m2) {
-        if (m1 == null || m2 == null) return "Starting Movie";
+        if (m1 == null || m2 == null) {
+            return "Starting Movie";
+        }
         for (MovieFlyweight.Person person : m1.getActors()) {
-            if (m2.getActors().contains(person)) return "Actor: " + person.getName();
+            if (m2.getActors().contains(person)) {
+                return "Actor: " + person.getName();
+            }
         }
         for (MovieFlyweight.Person person : m1.getDirectors()) {
-            if (m2.getDirectors().contains(person)) return "Director: " + person.getName();
+            if (m2.getDirectors().contains(person)) {
+                return "Director: " + person.getName();
+            }
         }
-        for (MovieFlyweight.Person person : m1.getWriters()) {
-            if (m2.getWriters().contains(person)) return "Writer: " + person.getName();
-        }
-        for (MovieFlyweight.Person person : m1.getCinematographers()) {
-            if (m2.getCinematographers().contains(person)) return "Cinematographer: " + person.getName();
-        }
-        for (MovieFlyweight.Person person : m1.getComposers()) {
-            if (m2.getComposers().contains(person)) return "Composer: " + person.getName();
-        }
+
         return "No direct connection found";
     }
 }
