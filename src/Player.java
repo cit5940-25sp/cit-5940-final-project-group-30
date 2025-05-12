@@ -33,6 +33,15 @@ public class Player {
         return false;
     }
 
+    public int getProgressForGenre(String genre) {
+        int count = 0;
+        for (Movie movie : usedMovies) {
+            if (movie.getGenres().contains(genre)) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     public void addUsedMovie(Movie movie) {
         usedMovies.add(movie);

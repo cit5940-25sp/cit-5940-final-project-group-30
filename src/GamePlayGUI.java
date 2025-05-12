@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 
 public class GamePlayGUI extends JFrame implements GameView {
     private GameController controller;
@@ -158,12 +159,25 @@ public class GamePlayGUI extends JFrame implements GameView {
         GameState state = controller.getGameState();
         StringBuilder sb = new StringBuilder();
 
-        sb.append("Player 1: ").append(state.getPlayer1().getName())
-                .append(" | Win Condition: ").append(state.getPlayer1().
-                        getWinCondition()).append("\n");
-        sb.append("Player 2: ").append(state.getPlayer2().getName())
-                .append(" | Win Condition: ").append(state.getPlayer2().
-                        getWinCondition()).append("\n");
+        Player p1 = state.getPlayer1();
+        Player p2 = state.getPlayer2();
+
+        for (Map.Entry<String, Integer> entry : p1.getWinCondition().entrySet()) {
+            String genre = entry.getKey();
+            int goal = entry.getValue();
+            int progress = p1.getProgressForGenre(genre);
+            sb.append("Player 1: ").append(p1.getName())
+                    .append(" | Goal: ").append(genre).append(" ").append(progress).append("/").append(goal).append("\n");
+        }
+
+        for (Map.Entry<String, Integer> entry : p2.getWinCondition().entrySet()) {
+            String genre = entry.getKey();
+            int goal = entry.getValue();
+            int progress = p2.getProgressForGenre(genre);
+            sb.append("Player 2: ").append(p2.getName())
+                    .append(" | Goal: ").append(genre).append(" ").append(progress).append("/").append(goal).append("\n");
+        }
+
         sb.append("Current Player: ").append(state.getCurrentPlayer().getName()).append("\n");
         sb.append("Round: ").append(state.getRoundCount()).append("\n\n");
 
