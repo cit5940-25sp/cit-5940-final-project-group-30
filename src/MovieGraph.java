@@ -1,105 +1,78 @@
 import java.util.*;
 
 public class MovieGraph {
-    // Quick lookup: title (lowercase) → Movie
-    private final Map<String, Movie> movieMap = new HashMap<>();
-    // Map each Person → all Movies they appear in
-    private final Map<MovieFlyweight.Person, List<Movie>> personToMovies = new HashMap<>();
-    // Keep a list of all movies for random selection
-    private final List<Movie> allMovies = new ArrayList<>();
+    private final Map<Movie, Set<Movie>> movieEdges = new HashMap<>();
+    private final Map<String, Movie> movieMap    = new HashMap<>();
+    private final List<Movie> allMovies          = new ArrayList<>();
 
-    /**
-     * Add a new movie node (no edges yet).
-     */
+    /** Add a node to the graph (edges come later). */
     public void addMovie(Movie movie) {
-        movieMap.put(movie.getTitle().toLowerCase(), movie);
+        String key = movie.getTitle().toLowerCase();
+        movieMap.put(key, movie);
+        movieEdges.putIfAbsent(movie, new HashSet<>());
         allMovies.add(movie);
+    }
 
-        // index people by role
-        for (MovieFlyweight.Person p : movie.getActors()) {
-            personToMovies.computeIfAbsent(p, k -> new ArrayList<>()).add(movie);
+    /** After loading everything, connect movies sharing any Person flyweight. */
+    public void buildConnections() {
+        // person → list of movies they worked on
+        Map<MovieFlyweight.Person, Set<Movie>> personToMovies = new HashMap<>();
+
+        // collect: for each movie, for each person role, group them
+        for (Movie m : allMovies) {
+            for (MovieFlyweight.Person p : m.getActors()) {
+                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
+            }
+            for (MovieFlyweight.Person p : m.getDirectors()) {
+                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
+            }
+            for (MovieFlyweight.Person p : m.getWriters()) {
+                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
+            }
+            for (MovieFlyweight.Person p : m.getCinematographers()) {
+                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
+            }
+            for (MovieFlyweight.Person p : m.getComposers()) {
+                personToMovies.computeIfAbsent(p, k -> new HashSet<>()).add(m);
+            }
         }
-        for (MovieFlyweight.Person p : movie.getDirectors()) {
-            personToMovies.computeIfAbsent(p, k -> new ArrayList<>()).add(movie);
-        }
-        for (MovieFlyweight.Person p : movie.getWriters()) {
-            personToMovies.computeIfAbsent(p, k -> new ArrayList<>()).add(movie);
-        }
-        for (MovieFlyweight.Person p : movie.getCinematographers()) {
-            personToMovies.computeIfAbsent(p, k -> new ArrayList<>()).add(movie);
-        }
-        for (MovieFlyweight.Person p : movie.getComposers()) {
-            personToMovies.computeIfAbsent(p, k -> new ArrayList<>()).add(movie);
+
+        // for each person, fully connect their movies
+        for (Set<Movie> group : personToMovies.values()) {
+            if (group.size() < 2) continue;
+            for (Movie m1 : group) {
+                for (Movie m2 : group) {
+                    if (!m1.equals(m2)) {
+                        movieEdges.get(m1).add(m2);
+                        movieEdges.get(m2).add(m1);
+                    }
+                }
+            }
         }
     }
 
-    /**
-     * Check if two movies share an edge.
-     */
+    /** True if m1 and m2 share an edge. */
     public boolean areConnected(Movie m1, Movie m2) {
-        return getNeighbors(m1).contains(m2);
+        return movieEdges.getOrDefault(m1, Collections.emptySet()).contains(m2);
     }
 
-    /**
-     * Get all directly connected neighbors of a movie.
-     */
+    /** Return every neighbor of the given movie. */
     public List<Movie> getNeighbors(Movie movie) {
-        Set<Movie> neighbors = new HashSet<>();
-
-        for (MovieFlyweight.Person p : movie.getActors()) {
-            List<Movie> list = personToMovies.getOrDefault(p, Collections.emptyList());
-            for (Movie m : list) {
-                if (!m.equals(movie)) neighbors.add(m);
-            }
-        }
-        for (MovieFlyweight.Person p : movie.getDirectors()) {
-            List<Movie> list = personToMovies.getOrDefault(p, Collections.emptyList());
-            for (Movie m : list) {
-                if (!m.equals(movie)) neighbors.add(m);
-            }
-        }
-        for (MovieFlyweight.Person p : movie.getWriters()) {
-            List<Movie> list = personToMovies.getOrDefault(p, Collections.emptyList());
-            for (Movie m : list) {
-                if (!m.equals(movie)) neighbors.add(m);
-            }
-        }
-        for (MovieFlyweight.Person p : movie.getCinematographers()) {
-            List<Movie> list = personToMovies.getOrDefault(p, Collections.emptyList());
-            for (Movie m : list) {
-                if (!m.equals(movie)) neighbors.add(m);
-            }
-        }
-        for (MovieFlyweight.Person p : movie.getComposers()) {
-            List<Movie> list = personToMovies.getOrDefault(p, Collections.emptyList());
-            for (Movie m : list) {
-                if (!m.equals(movie)) neighbors.add(m);
-            }
-        }
-
-        return new ArrayList<>(neighbors);
+        return new ArrayList<>(movieEdges.getOrDefault(movie, Collections.emptySet()));
     }
 
-    /**
-     * Look up a movie by its exact title (case-insensitive).
-     */
+    /** Lookup by title (case-insensitive). */
     public Movie getMovieByTitle(String title) {
         return movieMap.get(title.toLowerCase());
     }
 
-    /**
-     * Pick and return a random movie from allMovies,
-     * or null if we haven’t loaded anything.
-     */
+    /** Pick a random movie as a starter. */
     public Movie getRandomMovie() {
         if (allMovies.isEmpty()) return null;
-        int idx = new Random().nextInt(allMovies.size());
-        return allMovies.get(idx);
+        return allMovies.get(new Random().nextInt(allMovies.size()));
     }
 
-    /**
-     * @return the complete list of loaded movies
-     */
+    /** Everything we loaded, in insertion order. */
     public List<Movie> getAllMovies() {
         return allMovies;
     }

@@ -46,6 +46,7 @@ public class DataLoader {
             // if anything goes wrong, print the stack trace for debugging
             e.printStackTrace();
         }
+
         // return the fully built graph
         return movieGraph;
     }

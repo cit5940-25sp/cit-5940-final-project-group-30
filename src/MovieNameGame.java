@@ -49,3 +49,4 @@ class GameInitializer extends SwingWorker<Void, Void> {
         return null;
     }
 }
+

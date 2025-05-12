@@ -11,7 +11,9 @@ public class InputHandler {
 
     public void handleInput(String input) {
         if (input.startsWith(":")) {
-            handleCommand(input.substring(1));
+            handleCommand(input.substring(1).trim());
+        } else if (input.equalsIgnoreCase("quit") || input.equalsIgnoreCase("exit")) {
+            System.exit(0);
         } else {
             controller.processInput(input);
         }
@@ -21,9 +23,10 @@ public class InputHandler {
         String[] parts = command.split(" ");
         switch (parts[0].toLowerCase()) {
             case "suggest":
-                if (parts.length > 1) {
-                    List<Movie> suggestions = controller.getSuggestions(parts[1]);
-                    displaySuggestions(suggestions);
+                if (parts.length > 1 && !parts[1].isBlank()) {
+                    displaySuggestions(controller.getSuggestions(parts[1]));
+                } else {
+                    controller.getView().showError("Usage: :suggest <prefix>");
                 }
                 break;
             case "help":
