@@ -134,9 +134,26 @@ public class DataLoader {
      */
     private static int parseYear(String date) {
         try {
-            return (date != null && date.length() >= 4)
-                    ? Integer.parseInt(date.substring(0, 4))
-                    : 0;
+            if (date == null || date.isEmpty()) return 0;
+
+            // Handle different date formats:
+            // 1. "6/9/2015" (month/day/year)
+            // 2. "2015-06-09" (ISO format)
+            // 3. Just "2015" (year only)
+
+            if (date.contains("/")) {
+                // Format: MM/DD/YYYY
+                String[] parts = date.split("/");
+                if (parts.length == 3) {
+                    return Integer.parseInt(parts[2]);
+                }
+            } else if (date.contains("-")) {
+                // Format: YYYY-MM-DD
+                return Integer.parseInt(date.substring(0, 4));
+            }
+
+            // Try parsing as plain year
+            return Integer.parseInt(date);
         } catch (NumberFormatException e) {
             return 0;
         }
