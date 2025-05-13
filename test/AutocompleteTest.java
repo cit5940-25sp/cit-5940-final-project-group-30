@@ -1,42 +1,59 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-
 public class AutocompleteTest {
-
-    private Autocomplete ac;
-    private List<String> genres = List.of("Genre");
-
-    private Movie mA, mB, mC;
+    private Autocomplete autocomplete;
+    private Movie movie1, movie2, movie3;
 
     @BeforeEach
     void setUp() {
-        ac = new Autocomplete();
-        mA = new Movie("Alpha", 2000, genres,
-                List.of(), List.of(), List.of(), List.of(), List.of());
-        mB = new Movie("Alpine", 2010, genres,
-                List.of(), List.of(), List.of(), List.of(), List.of());
-        mC = new Movie("Beta", 2005, genres,
-                List.of(), List.of(), List.of(), List.of(), List.of());
+        autocomplete = new Autocomplete();
 
-        ac.insert(mA);
-        ac.insert(mB);
-        ac.insert(mC);
+        movie1 = new Movie("The Shawshank Redemption", 1994,
+                List.of("Drama"),
+                List.of(MovieFlyweight.getPerson("Frank Darabont", "director")),
+                List.of(MovieFlyweight.getPerson("Tim Robbins", "actor")));
+
+        movie2 = new Movie("The Godfather", 1972,
+                List.of("Crime", "Drama"),
+                List.of(MovieFlyweight.getPerson("Francis Ford Coppola", "director")),
+                List.of(MovieFlyweight.getPerson("Marlon Brando", "actor")));
+
+        movie3 = new Movie("The Godfather: Part II", 1974,
+                List.of("Crime", "Drama"),
+                List.of(MovieFlyweight.getPerson("Francis Ford Coppola", "director")),
+                List.of(MovieFlyweight.getPerson("Al Pacino", "actor")));
+
+        autocomplete.insert(movie1);
+        autocomplete.insert(movie2);
+        autocomplete.insert(movie3);
     }
 
     @Test
-    void suggestPrefixAlReturnsAlphaAndAlpineOrderedByYearDesc() {
-        List<Movie> results = ac.suggestMovies("Al");
-        assertEquals(2, results.size());
-        assertEquals(mB, results.get(0), "Newest match first");
-        assertEquals(mA, results.get(1));
+    void testSuggestPartialMatch() {
+        List<Movie> suggestions = autocomplete.suggestMovies("The God");
+        assertEquals(2, suggestions.size(), "Partial match should return 2 movies");
+        assertEquals(movie3, suggestions.get(0));
+        assertEquals(movie2, suggestions.get(1));
     }
 
     @Test
-    void suggestUnknownPrefixReturnsEmptyList() {
-        List<Movie> results = ac.suggestMovies("Zoo");
-        assertTrue(results.isEmpty());
+    void testSuggestCaseInsensitive() {
+        List<Movie> suggestions = autocomplete.suggestMovies("the gOd");
+        assertEquals(2, suggestions.size());
+    }
+
+    @Test
+    void testSuggestNoMatch() {
+        List<Movie> suggestions = autocomplete.suggestMovies("Pulp Fiction");
+        assertTrue(suggestions.isEmpty());
+    }
+
+    @Test
+    void testSuggestEmptyPrefix() {
+        List<Movie> suggestions = autocomplete.suggestMovies("");
+        assertEquals(3, suggestions.size());
     }
 }
