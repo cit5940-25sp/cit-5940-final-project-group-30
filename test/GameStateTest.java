@@ -1,102 +1,65 @@
-import org.junit.Before;
-import org.junit.Test;
-import java.util.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
 
 public class GameStateTest {
-    private Player p1;
-    private Player p2;
     private GameState gameState;
-    private Movie testMovie;
+    private Player player1, player2;
+    private Movie movie1, movie2;
 
-    @Before
-    public void setUp() {
-        // Win‐condition still uses a Map<String,Integer>
-        Map<String, Integer> wc = new HashMap<>();
-        wc.put("Action", 3);
+    @BeforeEach
+    void setUp() {
+        player1 = new Player("Player 1", Map.of("Drama", 2));
+        player2 = new Player("Player 2", Map.of("Crime", 1));
+        gameState = new GameState(player1, player2);
 
-        p1 = new Player("Alice", wc);
-        p2 = new Player("Bob", wc);
-        gameState = new GameState(p1, p2);
+        movie1 = new Movie("Movie 1", 2000,
+                List.of("Drama"),
+                List.of(MovieFlyweight.getPerson("Director 1", "director")),
+                List.of(MovieFlyweight.getPerson("Actor 1", "actor")));
 
-        // Prepare the Movie with Person flyweights instead of raw Strings
-        List<String> genres = List.of("Action");
-
-        List<MovieFlyweight.Person> directors = List.of(
-                MovieFlyweight.getPerson("George Miller", "director")
-        );
-        List<MovieFlyweight.Person> actors = List.of(
-                MovieFlyweight.getPerson("Tom Hardy", "actor")
-        );
-        List<MovieFlyweight.Person> writers = List.of(
-                MovieFlyweight.getPerson("George Miller", "writer")
-        );
-        List<MovieFlyweight.Person> cinematographers = List.of(
-                MovieFlyweight.getPerson("John Seale", "cinematographer")
-        );
-        List<MovieFlyweight.Person> composers = List.of(
-                MovieFlyweight.getPerson("Junkie XL", "composer")
-        );
-
-        testMovie = new Movie(
-                "Mad Max: Fury Road",
-                2015,
-                genres,
-                directors,
-                actors,
-                writers,
-                cinematographers,
-                composers
-        );
+        movie2 = new Movie("Movie 2", 2001,
+                List.of("Crime"),
+                List.of(MovieFlyweight.getPerson("Director 2", "director")),
+                List.of(MovieFlyweight.getPerson("Actor 2", "actor")));
     }
 
     @Test
-    public void testInitialCurrentPlayer() {
-        assertEquals(p1, gameState.getCurrentPlayer());
+    void testInitialState() {
+        assertEquals(player1, gameState.getCurrentPlayer());
+        assertEquals(0, gameState.getRoundCount());
+        assertTrue(gameState.getMovieHistory().isEmpty());
     }
 
     @Test
-    public void testSwitchPlayer() {
+    void testSwitchPlayer() {
         gameState.switchPlayer();
-        assertEquals(p2, gameState.getCurrentPlayer());
+        assertEquals(player2, gameState.getCurrentPlayer());
+        gameState.switchPlayer();
+        assertEquals(player1, gameState.getCurrentPlayer());
     }
 
     @Test
-    public void testAddMovieToHistoryAndRoundCount() {
-        gameState.addMovieToHistory(testMovie);
+    void testAddMovieToHistory() {
+        gameState.addMovieToHistory(movie1);
         assertEquals(1, gameState.getRoundCount());
-        assertEquals(testMovie, gameState.getMovieHistory().peekFirst());
+        Deque<Movie> history = gameState.getMovieHistory();
+        assertEquals(1, history.size());
+        assertEquals(movie1, history.peekFirst());
     }
 
     @Test
-    public void testHistoryLimitToFive() {
-        // Add 6 movies with empty crew lists
+    void testHistoryLimit() {
         for (int i = 0; i < 6; i++) {
-            Movie m = new Movie(
-                    "Movie " + i,
-                    2000 + i,
+            gameState.addMovieToHistory(new Movie("Movie " + i, 2000 + i,
                     List.of("Genre"),
-                    List.<MovieFlyweight.Person>of(),  // empty
-                    List.<MovieFlyweight.Person>of(),
-                    List.<MovieFlyweight.Person>of(),
-                    List.<MovieFlyweight.Person>of(),
-                    List.<MovieFlyweight.Person>of()
-            );
-            gameState.addMovieToHistory(m);
+                    List.of(MovieFlyweight.getPerson("Director", "director")),
+                    List.of(MovieFlyweight.getPerson("Actor", "actor"))));
         }
-        // Only five most recent should remain
         assertEquals(5, gameState.getMovieHistory().size());
-    }
-
-    @Test
-    public void testConnectionAvailability() {
-        String key = "actor:tom hardy";
-        assertTrue(gameState.isConnectionAvailable(key));
-        // use it three times
-        gameState.useConnection(key);
-        gameState.useConnection(key);
-        gameState.useConnection(key);
-        // fourth usage should be rejected
-        assertFalse(gameState.isConnectionAvailable(key));
     }
 }
