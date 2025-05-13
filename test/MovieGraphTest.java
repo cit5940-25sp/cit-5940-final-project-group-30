@@ -1,54 +1,72 @@
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
 public class MovieGraphTest {
+    private MovieGraph movieGraph;
+    private Movie movie1, movie2, movie3;
 
-    @Test
-    void twoMoviesWithSharedPersonAreConnected() {
-        // setup two movies sharing the same actor flyweight
-        var actor = MovieFlyweight.getPerson("Shared Star", "actor");
-        var genres = List.of("Drama");
+    @BeforeEach
+    void setUp() {
+        movieGraph = new MovieGraph();
 
-        Movie m1 = new Movie("First", 2001, genres,
-                List.of(), List.of(actor),
-                List.of(), List.of(), List.of());
-        Movie m2 = new Movie("Second", 2002, genres,
-                List.of(), List.of(actor),
-                List.of(), List.of(), List.of());
+        movie1 = new Movie("The Shawshank Redemption", 1994,
+                List.of("Drama"),
+                List.of(MovieFlyweight.getPerson("Frank Darabont", "director")),
+                List.of(MovieFlyweight.getPerson("Tim Robbins", "actor")));
 
-        MovieGraph g = new MovieGraph();
-        g.addMovie(m1);
-        g.addMovie(m2);
-        g.buildConnections();
+        movie2 = new Movie("The Green Mile", 1999,
+                List.of("Drama", "Fantasy"),
+                List.of(MovieFlyweight.getPerson("Frank Darabont", "director")),
+                List.of(MovieFlyweight.getPerson("Tom Hanks", "actor")));
 
-        assertTrue(g.areConnected(m1, m2),
-                "Movies sharing an actor should be connected");
-        assertEquals(1, g.getNeighbors(m1).size());
-        assertEquals(m2, g.getNeighbors(m1).get(0));
+        movie3 = new Movie("Forrest Gump", 1994,
+                List.of("Drama", "Romance"),
+                List.of(MovieFlyweight.getPerson("Robert Zemeckis", "director")),
+                List.of(MovieFlyweight.getPerson("Tom Hanks", "actor")));
+
+        movieGraph.addMovie(movie1);
+        movieGraph.addMovie(movie2);
+        movieGraph.addMovie(movie3);
+        movieGraph.buildConnections();
     }
 
     @Test
-    void distinctMoviesWithoutSharedPersonAreNotConnected() {
-        var a1 = MovieFlyweight.getPerson("Star A", "actor");
-        var a2 = MovieFlyweight.getPerson("Star B", "actor");
-        var genres = List.of("Action");
+    void testAddMovie() {
+        assertEquals(3, movieGraph.getAllMovies().size());
+    }
 
-        Movie m1 = new Movie("A", 1999, genres,
-                List.of(), List.of(a1),
-                List.of(), List.of(), List.of());
-        Movie m2 = new Movie("B", 2000, genres,
-                List.of(), List.of(a2),
-                List.of(), List.of(), List.of());
+    @Test
+    void testAreConnected() {
+        // Connected by director
+        assertTrue(movieGraph.areConnected(movie1, movie2));
+        // Connected by actor
+        assertTrue(movieGraph.areConnected(movie2, movie3));
+        // Not connected
+        assertFalse(movieGraph.areConnected(movie1, movie3));
+    }
 
-        MovieGraph g = new MovieGraph();
-        g.addMovie(m1);
-        g.addMovie(m2);
-        g.buildConnections();
+    @Test
+    void testGetNeighbors() {
+        List<Movie> neighbors = movieGraph.getNeighbors(movie2);
+        assertEquals(2, neighbors.size());
+        assertTrue(neighbors.contains(movie1));
+        assertTrue(neighbors.contains(movie3));
+    }
 
-        assertFalse(g.areConnected(m1, m2),
-                "Movies with no shared person should not be connected");
-        assertTrue(g.getNeighbors(m1).isEmpty());
+    @Test
+    void testGetMovieByTitle() {
+        assertEquals(movie1, movieGraph.getMovieByTitle("The Shawshank Redemption"));
+        assertEquals(movie1, movieGraph.getMovieByTitle("the shawshank redemption"));
+        assertNull(movieGraph.getMovieByTitle("Nonexistent Movie"));
+    }
+
+    @Test
+    void testGetRandomMovie() {
+        Movie randomMovie = movieGraph.getRandomMovie();
+        assertNotNull(randomMovie);
+        assertTrue(movieGraph.getAllMovies().contains(randomMovie));
     }
 }
