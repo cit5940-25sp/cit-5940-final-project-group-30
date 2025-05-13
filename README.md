@@ -1,5 +1,9 @@
 CIT 5940 Final Project by Emersen Rabuse, Alicia Niguidula, and Ziyi Li
 
+To run in terminal:
+1. javac src/*.java
+2. java -cp src MovieNameGame
+
 Movie Name Game Instructions https://static.us.edusercontent.com/files/UjtrYvSlWBrJciL6s0Ja4wae
 
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/nK589Lr0)
